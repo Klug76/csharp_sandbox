@@ -12,9 +12,12 @@ namespace invoke_test
 {
     public partial class Form1 : Form
     {
+        SynchronizationContext sc_;
         public Form1()
         {
             InitializeComponent();
+            sc_ = SynchronizationContext.Current;
+            Debug.WriteLine("UI:" + Thread.CurrentThread.ManagedThreadId);
             backgroundWorker1.RunWorkerAsync();
             Log("foo");
             Log("1");
@@ -34,13 +37,14 @@ namespace invoke_test
 
         private void Log(string s)
         {
-            Debug.WriteLine(Thread.CurrentThread.ManagedThreadId + ":" + this.InvokeRequired + ":" + s);
-            if (this.InvokeRequired)
-            {
-                BeginInvoke(new Log_Handler(Log), s);
-                Debug.WriteLine(Thread.CurrentThread.ManagedThreadId + " LEAVE");
-                return;
-            }
+            Debug.WriteLine(Thread.CurrentThread.ManagedThreadId + ":" + this.InvokeRequired + ": " + s);
+            sc_.Post(Log_, s);
+        }
+
+        private void Log_(object data)
+        {
+            string s = data as string;
+            Debug.WriteLine(Thread.CurrentThread.ManagedThreadId + ": " + s);
             label1.Text += s;
             label1.Text += Environment.NewLine;
         }
